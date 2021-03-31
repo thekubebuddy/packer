@@ -1,0 +1,40 @@
+{
+    "builders": [
+    {
+        "type": "googlecompute",
+        "project_id": "project-id",
+        "machine_type": "g1-small",
+        "network": "pilot-main-vpc",
+        "subnetwork": "pilot-apps-pvt-us-est4-subnet",
+        "region": "us-east4",
+        "zone": "us-east4-a",
+        "image_description": "packer-image",
+        "image_family" : "centos",
+        "image_name": "ishaq-salt-packer-img",
+        "source_image" : "centos-8-v20201014",
+        "source_image_family": "centos-8",
+        "disk_size": 20,
+        "disk_type": "pd-balanced",
+        "tags" : "packer-vm",
+        "metadata": { "enable-oslogin": "false"},
+        "ssh_username": "ishaqshaikh"       
+    }
+    ],
+    "provisioners": [{
+        "type": "shell",
+        "execute_command": "chmod +x {{.Path}}; env {{.Vars}} {{.Path}}",
+        "inline": [
+            "curl -L https://bootstrap.saltstack.com -o install_salt.sh",
+            "sudo sh install_salt.sh -P",
+            "sudo systemctl enable salt-minion",
+            "sleep 30",
+	    "sudo salt-call grains.setval service nginx --local"
+    	]
+    }, 
+    {
+        "type": "salt-masterless",
+        "skip_bootstrap": true,
+        "local_state_tree": "{{template_dir}}/salt"
+    }]
+    
+}
